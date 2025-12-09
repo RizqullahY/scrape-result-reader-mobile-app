@@ -47,7 +47,7 @@ class _HomePageState extends State<HomePage> {
     );
 
     if (confirm == true) {
-      await StorageService.deleteFolder(folder);
+      await StorageService.deleteDirectory(folder);
       setState(() {});
     }
   }
