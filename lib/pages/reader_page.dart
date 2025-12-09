@@ -21,10 +21,10 @@ class ReaderPage extends StatelessWidget {
           return ListView.builder(
             itemCount: images.length,
             itemBuilder: (_, i) {
-              return Container(
+              return Image.file(
+                images[i],
                 width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 10),
-                child: Image.file(images[i], fit: BoxFit.fitWidth),
+                fit: BoxFit.fitWidth,
               );
             },
           );
