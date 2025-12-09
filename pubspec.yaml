@@ -10,9 +10,10 @@ dependencies:
   flutter:
     sdk: flutter
 
-  archive: ^3.6.1         # unzip
-  path_provider: ^2.1.2   # akses folder private
-  photo_view: ^0.14.0     # viewer gambar
+  archive: ^3.6.1         
+  path_provider: ^2.1.2   
+  photo_view: ^0.14.0     
+  file_picker: ^8.0.0
 
   
   cupertino_icons: ^1.0.8
