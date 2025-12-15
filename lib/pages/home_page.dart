@@ -4,7 +4,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../services/unzip_service.dart';
 import '../services/storage_service.dart';
-import 'chapter_page.dart';
+import '../pages/chapter_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
