@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:archive/archive.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'storage_service.dart';
 
 class UnzipService {
   static Future<String> unzip(String zipPath) async {
-    final docs = await getApplicationDocumentsDirectory();
+    final root = await StorageService.getComicsRoot();
     final seriesName = p.basenameWithoutExtension(zipPath);
-    final outDir = Directory(p.join(docs.path, 'comics', seriesName));
+    final outDir = Directory(p.join(root.path, seriesName));
 
     if (!outDir.existsSync()) outDir.createSync(recursive: true);
 
@@ -15,8 +15,13 @@ class UnzipService {
     final archive = ZipDecoder().decodeBytes(bytes);
 
     for (final f in archive) {
-      if (f.name.startsWith('__MACOSX')) continue;
-      final outPath = p.join(outDir.path, f.name);
+      // STRIP ROOT FOLDER ZIP
+      final parts = p.split(f.name);
+      final relativePath = parts.length > 1
+          ? p.joinAll(parts.sublist(1))
+          : parts.first;
+
+      final outPath = p.join(outDir.path, relativePath);
 
       if (f.isFile) {
         File(outPath)

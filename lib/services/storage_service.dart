@@ -1,24 +1,27 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 class StorageService {
-  /// ROOT folder comics
+  /// ROOT folder comics (ANDROID ONLY, AMAN)
   static Future<Directory> getComicsRoot() async {
-    final dir = Directory("/data/user/0/com.example.app/app_flutter/comics");
+    final docs = await getApplicationDocumentsDirectory();
+    final dir = Directory(p.join(docs.path, 'comics'));
     if (!dir.existsSync()) dir.createSync(recursive: true);
     return dir;
   }
 
-  /// List SERIES atau CHAPTER di path manapun
+  /// List folder (series / chapter)
   static Future<List<Directory>> listFolders(String path) async {
     final dir = Directory(path);
     if (!dir.existsSync()) return [];
+
     final list = dir.listSync().whereType<Directory>().toList();
     list.sort((a, b) => a.path.compareTo(b.path));
     return list;
   }
 
-  /// List IMAGE dalam chapter
+  /// List image dalam chapter (URUT BENAR)
   static Future<List<File>> listImages(String chapterPath) async {
     final dir = Directory(chapterPath);
     if (!dir.existsSync()) return [];
@@ -35,22 +38,14 @@ class StorageService {
         })
         .toList();
 
-    images.sort((a, b) {
-      final aNum = _num(p.basename(a.path));
-      final bNum = _num(p.basename(b.path));
-      return aNum.compareTo(bNum);
-    });
+    // SORT AMAN (001, 002, 010)
+    images.sort((a, b) =>
+        p.basename(a.path).compareTo(p.basename(b.path)));
 
     return images;
   }
 
-  /// Hapus folder apapun
   static Future<void> deleteDirectory(Directory dir) async {
     if (dir.existsSync()) dir.deleteSync(recursive: true);
-  }
-
-  static int _num(String name) {
-    final m = RegExp(r'\d+').firstMatch(name);
-    return m == null ? 0 : int.parse(m.group(0)!);
   }
 }

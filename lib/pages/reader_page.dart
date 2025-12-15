@@ -16,7 +16,7 @@ class ReaderPage extends StatelessWidget {
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
 
           final images = snap.data!;
-          if (images.isEmpty) return const Center(child: Text("Tidak ada gambar"));
+          if (images.isEmpty) return const Center(child: Text('Tidak ada gambar'));
 
           return ListView.builder(
             itemCount: images.length,

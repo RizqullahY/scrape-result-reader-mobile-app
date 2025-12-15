@@ -18,7 +18,7 @@ class ChapterPage extends StatelessWidget {
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
 
           final chapters = snap.data!;
-          if (chapters.isEmpty) return const Center(child: Text("Tidak ada chapter"));
+          if (chapters.isEmpty) return const Center(child: Text('Tidak ada chapter'));
 
           return ListView.builder(
             itemCount: chapters.length,
@@ -26,14 +26,12 @@ class ChapterPage extends StatelessWidget {
               final name = p.basename(chapters[i].path);
               return ListTile(
                 title: Text(name),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ReaderPage(chapterPath: chapters[i].path),
-                    ),
-                  );
-                },
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ReaderPage(chapterPath: chapters[i].path),
+                  ),
+                ),
               );
             },
           );
