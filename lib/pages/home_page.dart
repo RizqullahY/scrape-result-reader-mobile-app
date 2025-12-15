@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/unzip_service.dart';
 import '../services/storage_service.dart';
@@ -15,146 +14,122 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String? comicsPath;
+  Directory? comicsRoot;
 
   @override
   void initState() {
     super.initState();
-    loadComicsPath();
+    _loadRoot();
   }
 
-  Future<void> loadComicsPath() async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString("comicsPath");
+  Future<void> _loadRoot() async {
+    final root = await StorageService.getComicsRoot();
     if (!mounted) return;
-    setState(() {
-      comicsPath = saved;
-    });
+    setState(() => comicsRoot = root);
   }
 
-  Future<String?> pickZip() async {
+  Future<void> _importZip() async {
     final res = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['zip'],
     );
-    return res?.files.single.path;
-  }
+    if (res == null) return;
 
-  Future<void> importZip() async {
-    final zip = await pickZip();
-    if (zip == null) return;
+    await UnzipService.unzip(res.files.single.path!);
 
-    // panggil service unzip (pastikan UnzipService.unzipComic ada)
-    final path = await UnzipService.unzipComic(zip);
-
-    // simpan path di SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString("comicsPath", path);
-
-    // cek mounted sebelum setState / pakai context
     if (!mounted) return;
-    setState(() {
-      comicsPath = path;
-    });
+    setState(() {}); // refresh list
 
-    // beri feedback ke user
-    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Berhasil mengimport komik!")),
+      const SnackBar(content: Text("ZIP berhasil diimport")),
     );
   }
 
-  Future<void> deleteSeries(Directory folder) async {
-    // showDialog juga memakai context — pastikan mounted sebelum menampilkan
-    final confirm = await showDialog<bool>(
+  Future<void> _deleteSeries(Directory dir) async {
+    final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Hapus Folder Ini?"),
-        content: Text(folder.path.split("/").last),
+        title: const Text("Hapus Series?"),
+        content: Text(dir.path.split('/').last),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Batal")),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Hapus")),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Batal")),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("Hapus")),
         ],
       ),
     );
 
-    if (confirm == true) {
-      await StorageService.deleteDirectory(folder);
-
+    if (ok == true) {
+      await StorageService.deleteDirectory(dir);
       if (!mounted) return;
       setState(() {});
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Folder berhasil dihapus")),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Series berhasil dihapus")));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (comicsRoot == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Scraping Result Reader"),
+        title: const Text("Comic Reader"),
         actions: [
           IconButton(
             icon: const Icon(Icons.upload_file),
-            onPressed: importZip,
+            onPressed: _importZip,
           ),
         ],
       ),
-      body: comicsPath == null
-          ? Center(
-              child: ElevatedButton(
-                onPressed: importZip,
-                child: const Text("Import ZIP Komik"),
-              ),
-            )
-          : FutureBuilder<List<Directory>>(
-              future: StorageService.listDirectories(comicsPath!),
-              builder: (context, snap) {
-                if (snap.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+      body: FutureBuilder<List<Directory>>(
+        future: StorageService.listSeries(comicsRoot!.path),
+        builder: (_, snap) {
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-                if (snap.hasError) {
-                  return Center(child: Text("Error: ${snap.error}"));
-                }
+          final seriesList = snap.data!;
 
-                final list = snap.data ?? [];
+          if (seriesList.isEmpty) {
+            return const Center(
+              child: Text("Belum ada komik.\nImport ZIP dulu."),
+            );
+          }
 
-                if (list.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      "Belum ada komik.\nSilakan import ZIP.",
-                      textAlign: TextAlign.center,
+          return ListView.builder(
+            itemCount: seriesList.length,
+            itemBuilder: (_, i) {
+              final series = seriesList[i];
+              final name = series.path.split('/').last;
+
+              return ListTile(
+                title: Text(name),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ChapterPage(seriesPath: series.path),
                     ),
                   );
-                }
-
-                return ListView.builder(
-                  itemCount: list.length,
-                  itemBuilder: (_, i) {
-                    final folder = list[i];
-                    return ListTile(
-                      title: Text(folder.path.split("/").last),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => deleteSeries(folder),
-                      ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ChapterPage(seriesPath: folder.path),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
+                },
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => _deleteSeries(series),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

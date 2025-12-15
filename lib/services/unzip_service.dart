@@ -4,36 +4,31 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
 class UnzipService {
-  static Future<String> unzipComic(String zipPath) async {
-    final docsDir = await getApplicationDocumentsDirectory();
+  static Future<String> unzip(String zipPath) async {
+    final docs = await getApplicationDocumentsDirectory();
+    final seriesName = p.basenameWithoutExtension(zipPath);
+    final outDir = Directory(p.join(docs.path, 'comics', seriesName));
 
-    final zipName = p.basenameWithoutExtension(zipPath);
-    final outputDir = Directory(
-      p.join(docsDir.path, 'comics', zipName),
-    );
-
-    if (!outputDir.existsSync()) {
-      outputDir.createSync(recursive: true);
+    if (!outDir.existsSync()) {
+      outDir.createSync(recursive: true);
     }
 
     final bytes = File(zipPath).readAsBytesSync();
     final archive = ZipDecoder().decodeBytes(bytes);
 
-    for (final file in archive) {
-      if (file.name.startsWith('__MACOSX')) continue;
+    for (final f in archive) {
+      if (f.name.startsWith('__MACOSX')) continue;
 
-      final outPath = p.join(outputDir.path, file.name);
-
-      if (file.isFile) {
+      final outPath = p.join(outDir.path, f.name);
+      if (f.isFile) {
         File(outPath)
           ..createSync(recursive: true)
-          ..writeAsBytesSync(file.content);
+          ..writeAsBytesSync(f.content);
       } else {
         Directory(outPath).createSync(recursive: true);
       }
     }
 
-    // ⬅️ INI YANG DIPASS KE READER
-    return outputDir.path;
+    return outDir.path; // ⬅️ SERIES PATH
   }
 }

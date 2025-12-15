@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-
 import '../services/storage_service.dart';
 import 'reader_page.dart';
+import 'package:path/path.dart' as p;
 
 class ChapterPage extends StatelessWidget {
   final String seriesPath;
@@ -12,24 +12,28 @@ class ChapterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Chapters")),
+      appBar: AppBar(title: const Text('Chapters')),
       body: FutureBuilder<List<Directory>>(
-        future: StorageService.listDirectories(seriesPath),
-        builder: (context, snap) {
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        future: StorageService.listChapters(seriesPath),
+        builder: (_, snap) {
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
           final chapters = snap.data!;
+
           return ListView.builder(
             itemCount: chapters.length,
             itemBuilder: (_, i) {
-              final c = chapters[i];
+              final name = p.basename(chapters[i].path);
               return ListTile(
-                title: Text(c.path.split("/").last),
+                title: Text(name),
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => ReaderPage(chapterPath: c.path),
+                      builder: (_) =>
+                          ReaderPage(chapterPath: chapters[i].path),
                     ),
                   );
                 },

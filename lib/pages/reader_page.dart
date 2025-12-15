@@ -5,48 +5,27 @@ import '../services/storage_service.dart';
 class ReaderPage extends StatelessWidget {
   final String chapterPath;
 
-  const ReaderPage({
-    super.key,
-    required this.chapterPath,
-  });
+  const ReaderPage({super.key, required this.chapterPath});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reader'),
-      ),
+      appBar: AppBar(title: const Text('Reader')),
       body: FutureBuilder<List<File>>(
         future: StorageService.listImages(chapterPath),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+        builder: (_, snap) {
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
           }
 
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Text('No images found'),
-            );
-          }
-
-          final images = snapshot.data!;
+          final images = snap.data!;
 
           return ListView.builder(
             itemCount: images.length,
-            itemBuilder: (context, index) {
-              return Image.file(
-                images[index],
-                width: double.infinity,
-                fit: BoxFit.fitWidth,
-                errorBuilder: (_, __, ___) => Container(
-                  height: 200,
-                  alignment: Alignment.center,
-                  child: const Icon(Icons.broken_image),
-                ),
-              );
-            },
+            itemBuilder: (_, i) => Image.file(
+              images[i],
+              fit: BoxFit.fitWidth,
+            ),
           );
         },
       ),
