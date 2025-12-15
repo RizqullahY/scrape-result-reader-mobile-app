@@ -1,5 +1,4 @@
 import 'dart:io';
-// import 'package:path/path.dart' as p;
 
 class StorageService {
   static Future<Directory> getComicsRoot() async {
@@ -14,24 +13,13 @@ class StorageService {
 
   static Future<List<Directory>> listDirectories(String rootPath) async {
     final dir = Directory(rootPath);
-
     if (!dir.existsSync()) return [];
 
-    return dir
-        .listSync()
-        .whereType<Directory>()
-        .toList();
-  }
-  
-  static int _extractNumber(String path) {
-    final name = path.split('/').last;
-    final match = RegExp(r'\d+').firstMatch(name);
-    return match != null ? int.parse(match.group(0)!) : 0;
+    return dir.listSync().whereType<Directory>().toList();
   }
 
   static Future<List<File>> listImages(String chapterPath) async {
     final dir = Directory(chapterPath);
-
     if (!dir.existsSync()) return [];
 
     final files = dir
@@ -39,19 +27,27 @@ class StorageService {
         .whereType<File>()
         .where((file) {
           final name = file.path.toLowerCase();
-          return name.endsWith(".jpg") ||
-              name.endsWith(".jpeg") ||
-              name.endsWith(".png");
+          return name.endsWith('.jpg') ||
+              name.endsWith('.jpeg') ||
+              name.endsWith('.png');
         })
         .toList();
 
+    /// 🔥 SORT BERDASARKAN ANGKA MURNI
     files.sort((a, b) {
-      final aNum = _extractNumber(a.path);
-      final bNum = _extractNumber(b.path);
+      final aNum = _fileNumber(a);
+      final bNum = _fileNumber(b);
       return aNum.compareTo(bNum);
     });
 
     return files;
+  }
+
+  /// Ambil angka dari nama file: "001.jpg" → 1, "10.png" → 10
+  static int _fileNumber(File file) {
+    final name = file.uri.pathSegments.last; // 001.jpg
+    final base = name.split('.').first;      // 001
+    return int.tryParse(base) ?? 0;
   }
 
   static Future<void> deleteDirectory(Directory dir) async {
