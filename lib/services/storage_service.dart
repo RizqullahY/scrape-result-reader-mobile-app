@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 class StorageService {
-
   /// ROOT folder comics
   static Future<Directory> getComicsRoot() async {
     final dir = Directory("/data/user/0/com.example.app/app_flutter/comics");
@@ -10,25 +9,16 @@ class StorageService {
     return dir;
   }
 
-  /// List folder SERIES di root comics
-  static Future<List<Directory>> listSeries(String rootPath) async {
-    final dir = Directory(rootPath);
+  /// List SERIES atau CHAPTER di path manapun
+  static Future<List<Directory>> listFolders(String path) async {
+    final dir = Directory(path);
     if (!dir.existsSync()) return [];
-    final series = dir.listSync().whereType<Directory>().toList();
-    series.sort((a, b) => a.path.compareTo(b.path));
-    return series;
+    final list = dir.listSync().whereType<Directory>().toList();
+    list.sort((a, b) => a.path.compareTo(b.path));
+    return list;
   }
 
-  /// List CHAPTER dalam satu SERIES
-  static Future<List<Directory>> listChapters(String seriesPath) async {
-    final dir = Directory(seriesPath);
-    if (!dir.existsSync()) return [];
-    final chapters = dir.listSync().whereType<Directory>().toList();
-    chapters.sort((a, b) => a.path.compareTo(b.path));
-    return chapters;
-  }
-
-  /// List IMAGE dalam satu CHAPTER
+  /// List IMAGE dalam chapter
   static Future<List<File>> listImages(String chapterPath) async {
     final dir = Directory(chapterPath);
     if (!dir.existsSync()) return [];
@@ -54,11 +44,9 @@ class StorageService {
     return images;
   }
 
-  /// Hapus folder (series atau chapter)
+  /// Hapus folder apapun
   static Future<void> deleteDirectory(Directory dir) async {
-    if (dir.existsSync()) {
-      dir.deleteSync(recursive: true);
-    }
+    if (dir.existsSync()) dir.deleteSync(recursive: true);
   }
 
   static int _num(String name) {

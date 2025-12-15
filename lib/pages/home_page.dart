@@ -1,14 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-
 import '../services/unzip_service.dart';
 import '../services/storage_service.dart';
-import '../pages/chapter_page.dart';
+import 'chapter_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -38,18 +36,18 @@ class _HomePageState extends State<HomePage> {
     await UnzipService.unzip(res.files.single.path!);
 
     if (!mounted) return;
-    setState(() {}); // refresh list
+    setState(() {}); // refresh
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("ZIP berhasil diimport")),
     );
   }
 
-  Future<void> _deleteSeries(Directory dir) async {
+  Future<void> _deleteFolder(Directory dir) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Hapus Series?"),
+        title: const Text("Hapus Folder?"),
         content: Text(dir.path.split('/').last),
         actions: [
           TextButton(
@@ -67,7 +65,7 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       setState(() {});
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Series berhasil dihapus")));
+          .showSnackBar(const SnackBar(content: Text("Folder dihapus")));
     }
   }
 
@@ -90,40 +88,35 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: FutureBuilder<List<Directory>>(
-        future: StorageService.listSeries(comicsRoot!.path),
+        future: StorageService.listFolders(comicsRoot!.path),
         builder: (_, snap) {
           if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final seriesList = snap.data!;
-
-          if (seriesList.isEmpty) {
-            return const Center(
-              child: Text("Belum ada komik.\nImport ZIP dulu."),
-            );
+          final folders = snap.data!;
+          if (folders.isEmpty) {
+            return const Center(child: Text("Belum ada komik. Import ZIP dulu."));
           }
 
           return ListView.builder(
-            itemCount: seriesList.length,
+            itemCount: folders.length,
             itemBuilder: (_, i) {
-              final series = seriesList[i];
-              final name = series.path.split('/').last;
-
+              final f = folders[i];
+              final name = f.path.split('/').last;
               return ListTile(
                 title: Text(name),
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          ChapterPage(seriesPath: series.path),
+                      builder: (_) => ChapterPage(seriesPath: f.path),
                     ),
                   );
                 },
                 trailing: IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _deleteSeries(series),
+                  onPressed: () => _deleteFolder(f),
                 ),
               );
             },

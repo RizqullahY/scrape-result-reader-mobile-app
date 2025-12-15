@@ -9,17 +9,15 @@ class UnzipService {
     final seriesName = p.basenameWithoutExtension(zipPath);
     final outDir = Directory(p.join(docs.path, 'comics', seriesName));
 
-    if (!outDir.existsSync()) {
-      outDir.createSync(recursive: true);
-    }
+    if (!outDir.existsSync()) outDir.createSync(recursive: true);
 
     final bytes = File(zipPath).readAsBytesSync();
     final archive = ZipDecoder().decodeBytes(bytes);
 
     for (final f in archive) {
       if (f.name.startsWith('__MACOSX')) continue;
-
       final outPath = p.join(outDir.path, f.name);
+
       if (f.isFile) {
         File(outPath)
           ..createSync(recursive: true)
@@ -29,6 +27,6 @@ class UnzipService {
       }
     }
 
-    return outDir.path; // ⬅️ SERIES PATH
+    return outDir.path;
   }
 }

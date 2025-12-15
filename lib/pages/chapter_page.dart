@@ -6,7 +6,6 @@ import 'package:path/path.dart' as p;
 
 class ChapterPage extends StatelessWidget {
   final String seriesPath;
-
   const ChapterPage({super.key, required this.seriesPath});
 
   @override
@@ -14,13 +13,12 @@ class ChapterPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Chapters')),
       body: FutureBuilder<List<Directory>>(
-        future: StorageService.listChapters(seriesPath),
+        future: StorageService.listFolders(seriesPath),
         builder: (_, snap) {
-          if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
 
           final chapters = snap.data!;
+          if (chapters.isEmpty) return const Center(child: Text("Tidak ada chapter"));
 
           return ListView.builder(
             itemCount: chapters.length,
@@ -32,8 +30,7 @@ class ChapterPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          ReaderPage(chapterPath: chapters[i].path),
+                      builder: (_) => ReaderPage(chapterPath: chapters[i].path),
                     ),
                   );
                 },

@@ -4,7 +4,6 @@ import '../services/storage_service.dart';
 
 class ReaderPage extends StatelessWidget {
   final String chapterPath;
-
   const ReaderPage({super.key, required this.chapterPath});
 
   @override
@@ -14,11 +13,10 @@ class ReaderPage extends StatelessWidget {
       body: FutureBuilder<List<File>>(
         future: StorageService.listImages(chapterPath),
         builder: (_, snap) {
-          if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
 
           final images = snap.data!;
+          if (images.isEmpty) return const Center(child: Text("Tidak ada gambar"));
 
           return ListView.builder(
             itemCount: images.length,
