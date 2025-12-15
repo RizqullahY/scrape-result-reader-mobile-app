@@ -30,19 +30,26 @@ class StorageService {
         })
         .toList();
 
+    // 🔥 SORTING NUMERIK YANG BENER
     files.sort((a, b) {
-      final aNum = _fileNumber(a);
-      final bNum = _fileNumber(b);
-      return aNum.compareTo(bNum);
+      final aNum = _extractNumber(a.path);
+      final bNum = _extractNumber(b.path);
+
+      if (aNum != bNum) {
+        return aNum.compareTo(bNum);
+      }
+
+      // fallback kalau angka sama
+      return a.path.compareTo(b.path);
     });
 
     return files;
   }
 
-  static int _fileNumber(File file) {
-    final name = file.uri.pathSegments.last; // "001.jpg"
-    final base = name.split('.').first;      // "001"
-    return int.tryParse(base) ?? 0;
+  static int _extractNumber(String path) {
+    final name = path.split('/').last;
+    final match = RegExp(r'\d+').firstMatch(name);
+    return match != null ? int.parse(match.group(0)!) : 0;
   }
 
   static Future<void> deleteDirectory(Directory dir) async {
