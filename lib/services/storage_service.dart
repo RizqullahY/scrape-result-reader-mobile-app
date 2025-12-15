@@ -22,6 +22,12 @@ class StorageService {
         .whereType<Directory>()
         .toList();
   }
+  
+  static int _extractNumber(String path) {
+    final name = path.split('/').last;
+    final match = RegExp(r'\d+').firstMatch(name);
+    return match != null ? int.parse(match.group(0)!) : 0;
+  }
 
   static Future<List<File>> listImages(String chapterPath) async {
     final dir = Directory(chapterPath);
@@ -39,7 +45,12 @@ class StorageService {
         })
         .toList();
 
-    files.sort((a, b) => a.path.compareTo(b.path));
+    files.sort((a, b) {
+      final aNum = _extractNumber(a.path);
+      final bNum = _extractNumber(b.path);
+      return aNum.compareTo(bNum);
+    });
+
     return files;
   }
 
