@@ -2,7 +2,9 @@ import 'dart:io';
 
 class StorageService {
   static Future<Directory> getComicsRoot() async {
-    final dir = Directory("/data/user/0/com.example.app/app_flutter/comics");
+    final dir =
+        Directory('/data/user/0/com.example.app/app_flutter/comics');
+
     if (!dir.existsSync()) {
       dir.createSync(recursive: true);
     }
@@ -12,7 +14,11 @@ class StorageService {
   static Future<List<Directory>> listDirectories(String rootPath) async {
     final dir = Directory(rootPath);
     if (!dir.existsSync()) return [];
-    return dir.listSync().whereType<Directory>().toList();
+
+    return dir
+        .listSync()
+        .whereType<Directory>()
+        .toList();
   }
 
   static Future<List<File>> listImages(String chapterPath) async {
@@ -26,11 +32,12 @@ class StorageService {
           final name = file.path.toLowerCase();
           return name.endsWith('.jpg') ||
               name.endsWith('.jpeg') ||
-              name.endsWith('.png');
+              name.endsWith('.png') ||
+              name.endsWith('.webp');
         })
         .toList();
 
-    // 🔥 SORTING NUMERIK YANG BENER
+    // 🔥 SORTING NUMERIK PALING AMAN
     files.sort((a, b) {
       final aNum = _extractNumber(a.path);
       final bNum = _extractNumber(b.path);
@@ -39,7 +46,6 @@ class StorageService {
         return aNum.compareTo(bNum);
       }
 
-      // fallback kalau angka sama
       return a.path.compareTo(b.path);
     });
 
