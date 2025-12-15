@@ -11,7 +11,7 @@ class ComicApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Offline Comic Reader",
+      title: "Scraping Result Reader",
       theme: ThemeData.dark(),
       home: const HomePage(),
     );

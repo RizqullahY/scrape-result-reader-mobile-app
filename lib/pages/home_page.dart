@@ -95,7 +95,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Offline Comic Reader"),
+        title: const Text("Scraping Result Reader"),
         actions: [
           IconButton(
             icon: const Icon(Icons.upload_file),
