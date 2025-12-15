@@ -3,18 +3,15 @@ import 'dart:io';
 class StorageService {
   static Future<Directory> getComicsRoot() async {
     final dir = Directory("/data/user/0/com.example.app/app_flutter/comics");
-
     if (!dir.existsSync()) {
       dir.createSync(recursive: true);
     }
-
     return dir;
   }
 
   static Future<List<Directory>> listDirectories(String rootPath) async {
     final dir = Directory(rootPath);
     if (!dir.existsSync()) return [];
-
     return dir.listSync().whereType<Directory>().toList();
   }
 
@@ -33,7 +30,6 @@ class StorageService {
         })
         .toList();
 
-    /// 🔥 SORT BERDASARKAN ANGKA MURNI
     files.sort((a, b) {
       final aNum = _fileNumber(a);
       final bNum = _fileNumber(b);
@@ -43,10 +39,9 @@ class StorageService {
     return files;
   }
 
-  /// Ambil angka dari nama file: "001.jpg" → 1, "10.png" → 10
   static int _fileNumber(File file) {
-    final name = file.uri.pathSegments.last; // 001.jpg
-    final base = name.split('.').first;      // 001
+    final name = file.uri.pathSegments.last; // "001.jpg"
+    final base = name.split('.').first;      // "001"
     return int.tryParse(base) ?? 0;
   }
 

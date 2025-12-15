@@ -1,38 +1,47 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-
+import 'package:visibility_detector/visibility_detector.dart';
 import '../services/storage_service.dart';
+import 'package:path/path.dart' as p;
 
 class ReaderPage extends StatefulWidget {
   final String chapterPath;
 
-  const ReaderPage({
-    super.key,
-    required this.chapterPath,
-  });
+  const ReaderPage({super.key, required this.chapterPath});
 
   @override
   State<ReaderPage> createState() => _ReaderPageState();
 }
 
 class _ReaderPageState extends State<ReaderPage> {
-  bool _showMargin = false;
+  bool _showDebug = false;
+  int _currentImage = 1;
+  int _totalImages = 0;
+
+  void _onVisible(int index, double visibleFraction) {
+    if (visibleFraction > 0.6 && _currentImage != index + 1) {
+      setState(() {
+        _currentImage = index + 1;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final chapterName = p.basename(widget.chapterPath);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Reader"),
+        title: _showDebug
+            ? Text("Chapter: $chapterName | Image: $_currentImage / $_totalImages")
+            : const Text("Reader"),
         actions: [
-          /// 🔘 Toggle margin
           IconButton(
-            icon: Icon(
-              _showMargin ? Icons.crop_free : Icons.crop_square,
-            ),
-            tooltip: _showMargin ? "Hide margin" : "Show margin",
+            icon: Icon(_showDebug ? Icons.bug_report : Icons.bug_report_outlined),
+            tooltip: "Toggle debug info",
             onPressed: () {
               setState(() {
-                _showMargin = !_showMargin;
+                _showDebug = !_showDebug;
               });
             },
           ),
@@ -41,81 +50,41 @@ class _ReaderPageState extends State<ReaderPage> {
       body: FutureBuilder<List<File>>(
         future: StorageService.listImages(widget.chapterPath),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No images found"));
-          }
-
           final images = snapshot.data!;
+          _totalImages = images.length;
 
           return ListView.builder(
             cacheExtent: 3000,
             itemCount: images.length,
             itemBuilder: (context, index) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  /// 🔹 Info halaman (opsional tampil selalu)
-                  if (_showMargin)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 6,
-                        horizontal: 12,
-                      ),
-                      child: Text(
-                        "Page ${index + 1} / ${images.length}",
-                        style: Theme.of(context).textTheme.labelSmall,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-
-                  /// 🔹 Image
-                  Padding(
-                    padding: EdgeInsets.only(
-                      bottom: _showMargin ? 12 : 0,
-                      left: _showMargin ? 8 : 0,
-                      right: _showMargin ? 8 : 0,
-                    ),
-                    child: Image(
-                      image: FileImage(images[index]),
-                      width: double.infinity,
-                      fit: BoxFit.fitWidth,
-
-                      frameBuilder:
-                          (context, child, frame, wasSynchronouslyLoaded) {
-                        if (frame != null || wasSynchronouslyLoaded) {
-                          return child;
-                        }
-
-                        return Container(
-                          width: double.infinity,
-                          height: 300,
-                          color: Colors.grey.shade300,
-                          alignment: Alignment.center,
-                          child: const CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
-                        );
-                      },
-
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 200,
-                          color: Colors.grey.shade200,
-                          alignment: Alignment.center,
-                          child: const Icon(
-                            Icons.broken_image,
-                            size: 48,
-                            color: Colors.grey,
-                          ),
-                        );
-                      },
-                    ),
+              return VisibilityDetector(
+                key: Key('image-$index'),
+                onVisibilityChanged: (info) {
+                  _onVisible(index, info.visibleFraction);
+                },
+                child: Image(
+                  image: FileImage(images[index]),
+                  width: double.infinity,
+                  fit: BoxFit.fitWidth,
+                  frameBuilder: (context, child, frame, wasSync) {
+                    if (frame != null || wasSync) return child;
+                    return Container(
+                      height: 300,
+                      color: Colors.grey.shade300,
+                      alignment: Alignment.center,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    );
+                  },
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 200,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.broken_image),
                   ),
-                ],
+                ),
               );
             },
           );
