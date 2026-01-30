@@ -9,21 +9,38 @@ class ReaderPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Reader')),
+      appBar: AppBar(
+        title: const Text('Reader'),
+      ),
       body: FutureBuilder<List<File>>(
         future: StorageService.listImages(chapterPath),
-        builder: (_, snap) {
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        builder: (context, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snap.hasData || snap.data!.isEmpty) {
+            return const Center(child: Text('Tidak ada gambar'));
+          }
 
           final images = snap.data!;
-          if (images.isEmpty) return const Center(child: Text('Tidak ada gambar'));
 
           return ListView.builder(
+            key: PageStorageKey(chapterPath), // 🔥 ANTI RESET SCROLL
+            cacheExtent: 2000, // 🔥 PRELOAD GAMBAR
             itemCount: images.length,
-            itemBuilder: (_, i) => Image.file(
-              images[i],
-              fit: BoxFit.fitWidth,
-            ),
+            itemBuilder: (context, i) {
+              return RepaintBoundary(
+                child: Image(
+                  image: ResizeImage(
+                    FileImage(images[i]),
+                    width: MediaQuery.of(context).size.width.toInt(),
+                  ),
+                  fit: BoxFit.fitWidth,
+                  gaplessPlayback: true, // 🔥 ANTI KEDIP / RELOAD
+                ),
+              );
+            },
           );
         },
       ),
